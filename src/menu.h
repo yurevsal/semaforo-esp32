@@ -9,6 +9,7 @@ class Menu
   String current_title;
   int current_option_idx;
   std::vector<Menu *> sub_menus;
+  std::vector<String> options;
   int goback; // Variavel que indica se este menu sera usado para retornar ao menu pai
   int minValue;
   int maxValue;
@@ -17,7 +18,7 @@ public:
   int myPosition;
   void (*_callback)(int); // Callback para salvar configurações ou realizar outras tarefas
   
-  Menu(String t, int _goback = 0, int* _var = NULL, int _min=0, int _max=100);
+  Menu(String t, int _goback = 0, int* _var = NULL, int _min=0, int _max=100, std::vector<String> _options={});
   void setOptionIdx(int n);
   int getOptionIdx();
   String getTitle();

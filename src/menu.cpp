@@ -1,11 +1,12 @@
 #include "menu.h"
 
-  Menu::Menu(String t, int _goback , int* _var , int _min, int _max)
+  Menu::Menu(String t, int _goback , int* _var , int _min, int _max, std::vector<String> _options)
   {
     title = t;
     current_option_idx = 0;
     goback = _goback;
     var = _var;
+    options = _options;
     minValue = _min;
     maxValue = _max;
   }
@@ -22,7 +23,12 @@
   {
     current_title = title;
     if(var != NULL)
-      current_title.replace("{0}", String(*var));
+    {
+      if(options.empty())
+        current_title.replace("{0}", String(*var));
+      else
+        current_title.replace("{0}", options[*var]);
+    }
     return current_title;
   }
   int Menu::subMenusLenght()

@@ -248,7 +248,7 @@ void Manager::showMenu()
 Manager screen_manager = Manager();
 Menu main_menu("Plano {0}", 0, &plan),
     menu_plans("Planos"),
-    menu_ped("Pedestres: {0}", 0, &current_plan.type, 0, 1),
+    menu_ped("Tipo: {0}", 0, &current_plan.type, 0, 1, {"CICLICO", "DEMANDA"}),
     menu_config_fases("Config. Fases"),
     blink_y("Amarelo intermitente"),
     menu_RTC("Ajustar RTC"),
