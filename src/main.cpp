@@ -362,8 +362,8 @@ void initMenus()
   fase8.pushMenu(&t_yellow8);
   fase8.pushMenu(&t_green8);
 
-  menu_config_fases.pushMenu(&_back);
-  // menu_config_fases.pushMenu(&_save_back, &savePlan);
+  // menu_config_fases.pushMenu(&_back);
+  menu_config_fases.pushMenu(&_save_back, &savePlan);
   menu_config_fases.pushMenu(&fase1);
   menu_config_fases.pushMenu(&fase2);
   menu_config_fases.pushMenu(&fase3);
@@ -373,7 +373,8 @@ void initMenus()
   menu_config_fases.pushMenu(&fase7);
   menu_config_fases.pushMenu(&fase8);
 
-  start_time.pushMenu(&_back);
+  // start_time.pushMenu(&_back);
+  start_time.pushMenu(&_save_back, &savePlan);
   start_time.pushMenu(&get_start_hour);
   start_time.pushMenu(&get_start_min);
 
@@ -385,13 +386,13 @@ void initMenus()
   // select_day.pushMenu(&get_start_day);
   // select_day.pushMenu(&get_end_day);
 
-  menu_plan_time.pushMenu(&_back);
-  // menu_plan_time.pushMenu(&_save_back, &savePlan);
+  // menu_plan_time.pushMenu(&_back);
+  menu_plan_time.pushMenu(&_save_back, &savePlan);
   menu_plan_time.pushMenu(&start_time);
   menu_plan_time.pushMenu(&end_time);
   menu_plan_time.pushMenu(&select_day);
 
-  menu_plans.pushMenu(&_back);
+  // menu_plans.pushMenu(&_back);
   menu_plans.pushMenu(&_save_back, &savePlan);
   menu_plans.pushMenu(&menu_plan_index);
   menu_plans.pushMenu(&menu_ped);
@@ -399,7 +400,7 @@ void initMenus()
   menu_plans.pushMenu(&menu_config_fases);
   menu_plans.pushMenu(&menu_plan_time);
 
-  menu_RTC.pushMenu(&_back);
+  // menu_RTC.pushMenu(&_back);
   menu_RTC.pushMenu(&_save_clock, &saveClock);
   menu_RTC.pushMenu(&date_day);
   menu_RTC.pushMenu(&date_month);
@@ -416,7 +417,7 @@ void initMenus()
   menu_wifi_off.pushMenu(&_back);
   menu_wifi_off.pushMenu(&clear_wifi_back, &cleanWifi);
 
-  blink_y.pushMenu(&_back);
+  // blink_y.pushMenu(&_back);
   blink_y.pushMenu(&_save_yellow, &saveBlinkPlan);
   blink_y.pushMenu(&start_time);
 
