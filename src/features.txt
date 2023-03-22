@@ -1,0 +1,46 @@
+Tarefas a implementar
+ -Menu
+    tela ociosa(A fazer);
+    menu de ajuste de data/hora (Feito)
+    menu de ajuste de estagios (Feito)
+    menu de pedestre (Feito)
+    menu de amarelo intermitente (Feito)
+- RTC
+    inicialização(Feito)
+    acesso(Feito)
+    atribuição via menu(Feito)
+    sincronização do rtc com rtc do ESP32(opcional)
+- Luzes
+    inicialização(Feito)
+    utilização(Feito)
+    Amarelo intermitente(Feito)
+    Arquivo de atrasos para cada plano e fase(Feito)
+    Criação de jsom para ajuste de tempo remoto(Feito com preferences)
+    Ajuste de tempo local(Feito)
+    Ajuste remoto
+- WiFi
+    Inicialização(Feito)
+    Configuração remota AP(Feito)
+    Configuração Local via menu(opcional)
+- Protocolo
+    Conexão http
+    Obter json
+- Servidor
+- Arquivo de configurações
+    Inicialização(Feito)
+    Leitura(Feito)
+    Leitura(Feito)
+    Extração de dados do plano apartir do arquivo
+
+Bugs
+    - Tirar zero das opções de dias do amarelo intermitente(Feito)
+    - Amarelo intermitente parece não funcionar as vezes no horario(Feito)
+    - Wifi manager bloqueia um core totalmente então ele buga a inicialização do sistema se usado numa task
+    - Os parametros estáo sendo sobrescritos pelo servidor sempre.(Falar com Ary)
+    - Corrigir a logo
+
+--------------------------
+plano x     hh:mm   online
+--------------------------
+FASE: x     VD: 1/12
+MODO: y     VM: _/_
