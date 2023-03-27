@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include <vector>
 #include <ArduinoJson.h>
+#include "SPIFFS.h"
+#include "FS.h"
 
 #define PLAIN_MODEL_NAMESPACE "PLANOS"
 namespace S_MODE
@@ -16,10 +18,12 @@ namespace S_MODE
 
 class Plan_model
 {
+    String readFile(String path);
+    bool writeFile(String path, String message);
 public:
     int id;   // Plano1, plano2, ...
-    int type; // Normal, alta demanda
-    int n_phases;
+    int type = 0; // Normal, alta demanda
+    int n_phases = 1;
     int start_hour = 0;
     int start_min = 0;
     int end_hour = 0;
@@ -31,10 +35,11 @@ public:
     uint32_t start_counter;
     uint32_t stop_counter;
   
-    void save() {}
-    void load() {}
-    void startPlain() {}
-    static void run(void *parameter) {}
+    void init(int _id);
+    bool listDir();
+    void save();
+    bool load();
+    
 };
 
 #endif

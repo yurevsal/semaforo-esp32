@@ -6,80 +6,6 @@
 // #define CONFIG_ARDUINO_LOOP_STACK_SIZE 16000
 // #endif
 
-class SemaphoreBlink
-{
-public:
-  int start_hour = 0;
-  int start_min = 0;
-  int end_hour = 0;
-  int end_min = 0;
-  int start_day = 1;
-  int end_day = 1;
-  bool active = 0;
-  uint32_t start_counter;
-  uint32_t stop_counter;
-
-  void setStartCounter(uint32_t n)
-  {
-    start_counter = n;
-    start_hour = n / 3600;
-    start_min = n % 3600;
-  }
-
-  void setEndCounter(uint32_t n)
-  {
-    stop_counter = n;
-    end_hour = n / 3600;
-    end_min = n % 3600;
-  }
-  int check(uint32_t num, uint32_t start, uint32_t end)
-  {
-    if (start < end)
-    {
-      if (num >= start and num <= end)
-        return 1;
-      else
-        return 0;
-    }
-    if (start > end)
-    {
-      if (num < start and num > end)
-        return 0;
-      else
-        return 1;
-    }
-    if (start == end)
-    {
-      if (num == start)
-        return 1;
-      else
-        return 0;
-    }
-    return 0;
-  };
-  uint32_t cvtTimeToSeconds(uint32_t hour, uint32_t min)
-  {
-    return hour * 3600 + min * 60;
-  };
-  // Checa se o horário está dentro da faixa de horarios para o amarelo intermitente
-  int checkTime(ESP32Time *rtc)
-  {
-    // Serial.println("Testando RTC");
-    // Serial.println("---------------------------------------------");
-    uint32_t start = cvtTimeToSeconds(start_hour, start_min);
-    uint32_t end = cvtTimeToSeconds(end_hour, end_min);
-    uint32_t current_time = cvtTimeToSeconds(rtc->getHour(true), rtc->getMinute());
-    uint8_t current_day = rtc->getDayofWeek() + 1; // para 1 porque o domingo foi adotado com numero 1
-    // Serial.printf("Current: %u\tStart: %u\tFinal: %u\n", current_time, start, end);
-    // Serial.printf("Curr. day: %u\tStart: %u\tFinal: %u\n", current_day, start_day, end_day);
-    // Serial.println(check(current_time, start, end));
-    // Serial.println(check(current_day, start_day, end_day));
-    // Serial.println("---------------------------------------------");
-    active = check(current_time, start, end) && check(current_day, start_day, end_day);
-    return active;
-  }
-} blink_semaphore;
-
 namespace keyboard
 {
   enum e
@@ -126,11 +52,12 @@ PubSubClient client(espClient);
 
 WiFiManager wm;
 
+std::vector<Plan_model> plan_list;
+
 void top_bar(String msg1, String time, OLEDDISPLAY_TEXT_ALIGNMENT align);
 void body_box(std::vector<String> options, int option);
 void home_box(std::vector<String> options);
 void printCurrentTime(int num);
-Plan_model getTimes(int n);
 void savePlan(int n);
 void saveClock(int n);
 void setPlan(int _plan);
@@ -166,7 +93,6 @@ void Manager::showMenu()
     }
     // int index = increase_option;
     int index = current_menu()->getOptionIdx();
-
     // top_bar(title, hours_str); // Alterar o acesso á esse rtc
     // Mostra o Menu
     if (millis() - counter >= REFRESH_DELAY)
@@ -248,7 +174,7 @@ void Manager::showMenu()
 Manager screen_manager = Manager();
 Menu main_menu("Plano {0}", 0, &plan),
     menu_plans("Planos"),
-    menu_ped("Tipo: {0}", 0, &current_plan.type, 0, 1, {"CICLICO", "DEMANDA"}),
+    menu_ped("Tipo: {0}", 0, &current_plan.type, 0, 1 , {"CICLICO", "DEMANDA","AMARELO"}),
     menu_config_fases("Config. Fases"),
     blink_y("Amarelo intermitente"),
     menu_RTC("Ajustar RTC"),
@@ -266,7 +192,7 @@ Menu get_start_hour("Hora: {0}", 0, &current_plan.start_hour, 0, 23),
     get_start_day("Inicio: {0}", 0, &current_plan.start_day, 1, 7),
     get_end_day("Final: {0}", 0, &current_plan.end_day, 1, 7);
 
-Menu menu_plan_index("Plano: {0}", 0, &plan, 1, 6),
+Menu menu_plan_index("Plano: {0}", 0, &plan, 1, N_PLAN_MAX),
     menu_phases_length("N° fases: {0}", 0, &current_plan.n_phases, 1, N_CANAIS_MAX),
     menu_plan_time("Horario"),
     fase1("Fase 1"),
@@ -378,9 +304,9 @@ void initMenus()
   start_time.pushMenu(&get_start_hour);
   start_time.pushMenu(&get_start_min);
 
-  // end_time.pushMenu(&_back);
-  // end_time.pushMenu(&get_end_hour);
-  // end_time.pushMenu(&get_end_min);
+  end_time.pushMenu(&_back);
+  end_time.pushMenu(&get_end_hour);
+  end_time.pushMenu(&get_end_min);
 
   // select_day.pushMenu(&_back);
   // select_day.pushMenu(&get_start_day);
@@ -389,8 +315,8 @@ void initMenus()
   // menu_plan_time.pushMenu(&_back);
   menu_plan_time.pushMenu(&_save_back, &savePlan);
   menu_plan_time.pushMenu(&start_time);
-  menu_plan_time.pushMenu(&end_time);
-  menu_plan_time.pushMenu(&select_day);
+  // menu_plan_time.pushMenu(&end_time);
+  // menu_plan_time.pushMenu(&select_day);
 
   // menu_plans.pushMenu(&_back);
   menu_plans.pushMenu(&_save_back, &savePlan);
@@ -419,7 +345,9 @@ void initMenus()
 
   // blink_y.pushMenu(&_back);
   blink_y.pushMenu(&_save_yellow, &saveBlinkPlan);
+  blink_y.pushMenu(&menu_phases_length);
   blink_y.pushMenu(&start_time);
+  blink_y.pushMenu(&end_time);
 
   main_menu.pushMenu(&menu_plans);
   main_menu.pushMenu(&blink_y);
@@ -744,14 +672,8 @@ void ledsLoop(void *parameter)
     esp_task_wdt_reset();
     setFase(i, colors::RED, 1);
   }
-  vTaskDelay(3000 / portTICK_PERIOD_MS); //
-                                         // for (int i = 1; i <= 7; i++)
-                                         // {
-                                         //   esp_task_wdt_reset();
-                                         //   setFase(i, colors::YELLOW, 0);
-                                         // }
-                                         // vTaskDelay(1000 / portTICK_PERIOD_MS); //
-  for (;;)
+  vTaskDelay(3000 / portTICK_PERIOD_MS);                   
+  for(;;)
   {
     esp_task_wdt_reset();
     // Modo via comum
@@ -766,6 +688,7 @@ void ledsLoop(void *parameter)
 
     while (current_plan.type == semaphore::NORMAL)
     {
+      Serial.printf("[1]: Ciclico\n" );
       esp_task_wdt_reset();
       int canal_counter = 0;
       bool canal_turn_off = false;
@@ -833,6 +756,7 @@ void ledsLoop(void *parameter)
         setFase(i, colors::YELLOW, 0);
         setFase(i, colors::RED, 0);
       }
+      Serial.printf("[2]: Ciclico\n" );
     }
     for (int i = 1; i <= current_plan.n_phases; i++)
     {
@@ -843,6 +767,7 @@ void ledsLoop(void *parameter)
     }
     while (current_plan.type == semaphore::HIGHWAY)
     {
+      Serial.printf("[1]: Demanda\n" );
       esp_task_wdt_reset();
       current_channel = 0;
       for (int i = 1; i < 7; i++)
@@ -861,7 +786,7 @@ void ledsLoop(void *parameter)
       setFase(1, colors::GREEN, 1);
       setFase(1, colors::YELLOW, 0);
       setFase(1, colors::RED, 0);
-      while(!pede_clicked)
+      while (!pede_clicked)
       {
         vTaskDelay(50 / portTICK_PERIOD_MS);
         esp_task_wdt_reset();
@@ -908,6 +833,7 @@ void ledsLoop(void *parameter)
         }
         pede_clicked = false;
       }
+      Serial.printf("[2]: Demanda\n" );
     }
     for (int i = 1; i <= current_plan.n_phases; i++)
     {
@@ -918,15 +844,24 @@ void ledsLoop(void *parameter)
     }
     while (current_plan.type == semaphore::BLINK)
     {
+      for (int i = 1; i < 7; i++)
+      {
+        esp_task_wdt_reset();
+        setFase(i, colors::RED, 0);
+        setFase(i, colors::YELLOW, 0);
+        setFase(i, colors::GREEN, 0);
+      }
       current_color = "AM";
       current_channel = 0;
-      for (int i = 1; i < 7; i++)
+      Serial.println("Amarelo Ligado");
+      for (int i = 1; i <= current_plan.n_phases; i++)
       {
         esp_task_wdt_reset();
         setFase(i, colors::YELLOW, 1);
       }
       vTaskDelay(1000 / portTICK_PERIOD_MS); //
-      for (int i = 1; i < 7; i++)
+      Serial.println("Amarelo Desligado");
+      for (int i = 1; i <= current_plan.n_phases; i++)
       {
         esp_task_wdt_reset();
         setFase(i, colors::YELLOW, 0);
@@ -939,108 +874,12 @@ void ledsLoop(void *parameter)
 // Guarda as configurações de tempo de todas as fases
 void savePlan(int n)
 {
-  Preferences p;
-  // if (n!=0) n=plan;
-  String name = "plan" + String(plan);
-
-  Serial.printf("Salvando plano: %s\n", name.c_str());
-
-  // setPlan(plan);
-
-  p.begin(name.c_str(), false);
-
-  String key = "BEGIN_DAY";
-  p.putInt(key.c_str(), current_plan.start_day);
-  key = "END_DAY";
-  p.putInt(key.c_str(), current_plan.end_day);
-  key = "BEGIN_H";
-  p.putInt(key.c_str(), current_plan.start_hour);
-  key = "END_H";
-  p.putInt(key.c_str(), current_plan.end_hour);
-  key = "BEGIN_M";
-  p.putInt(key.c_str(), current_plan.start_min);
-  key = "END_M";
-  p.putInt(key.c_str(), current_plan.end_min);
-
-  // Salva o tipo de pedestre do plano atual
-  key = "WALKER_TYPE";
-  if (current_plan.type < 2)
-    p.putInt(key.c_str(), current_plan.type);
-
-  // Salva a quantidade de canais do plano atual
-  key = "N_CHANNELS";
-  p.putInt(key.c_str(), current_plan.n_phases);
-
-  for (int i = 0; i < 8; i++)
-  {
-    key = "F{}_GREEN";
-    key.replace("{}", String(i));
-    p.putInt(key.c_str(), current_plan.delays[i][colors::GREEN]);
-    Serial.printf("Verde: %s: %d\t ", key.c_str(), p.getInt(key.c_str(), 1));
-
-    key = "F{}_YELLOW";
-    key.replace("{}", String(i));
-    p.putInt(key.c_str(), current_plan.delays[i][colors::YELLOW]);
-    Serial.printf("Amarelo %s: %d\t", key.c_str(), p.getInt(key.c_str(), 1));
-
-    key = "F{}_RED";
-    key.replace("{}", String(i));
-    p.putInt(key.c_str(), current_plan.delays[i][colors::RED]);
-    Serial.printf("Vermelho: %s: %d\n", key.c_str(), p.getInt(key.c_str(), 1));
-  }
-  p.end();
+  Serial.printf("Salvando plano: %d\n", plan);
+  Serial.printf("Salvando plano: %d\n", plan_list[plan].id);
+  current_plan.id = plan;
+  plan_list[plan] = current_plan;
+  plan_list[plan].save();
   getStartTimePlan(horarios);
-}
-
-Plan_model getTimes(int n = 0)
-{
-  Plan_model my_plan;
-  // Obtendo o plano
-  // if (n <= 0)
-  //   plan = getPlainIdx();
-
-  String name = "plan" + String(plan);
-  // Serial.printf("Plano: %s\n", name.c_str());
-
-  Preferences p;
-  p.begin(name.c_str(), false);
-
-  // Tipo de pedestre
-  String key = "WALKER_TYPE";
-  my_plan.type = p.getInt(key.c_str(), 0);
-
-  key = "BEGIN_DAY";
-  my_plan.start_day = p.getInt(key.c_str(), 1);
-  key = "END_DAY";
-  my_plan.end_day = p.getInt(key.c_str(), 1);
-  key = "BEGIN_H";
-  my_plan.start_hour = p.getInt(key.c_str(), 0);
-  key = "END_H";
-  my_plan.end_hour = p.getInt(key.c_str(), 0);
-  key = "BEGIN_M";
-  my_plan.start_min = p.getInt(key.c_str(), 0);
-  key = "END_M";
-  my_plan.end_min = p.getInt(key.c_str(), 0);
-
-  // Numero de canais
-  key = "N_CHANNELS";
-  my_plan.n_phases = p.getInt(key.c_str(), 1);
-
-  for (int i = 0; i < 8; i++)
-  {
-    String key = "F{}_GREEN";
-    key.replace("{}", String(i));
-    my_plan.delays[i][colors::GREEN] = p.getInt(key.c_str(), 1);
-    key = "F{}_YELLOW";
-    key.replace("{}", String(i));
-    my_plan.delays[i][colors::YELLOW] = p.getInt(key.c_str(), 1);
-    key = "F{}_RED";
-    key.replace("{}", String(i));
-    my_plan.delays[i][colors::RED] = p.getInt(key.c_str(), 1);
-    // Serial.printf("tempos[%d] = [%d, %d, %d]\n", i, my_plan.delays[i][colors::GREEN], my_plan.delays[i][colors::YELLOW], my_plan.delays[i][colors::RED]);
-  }
-  p.end();
-  return my_plan;
 }
 
 void saveClock(int n)
@@ -1080,24 +919,6 @@ void printCurrentTime(int num = 0)
   Serial.print(now.second(), DEC);
   Serial.println();
 }
-
-// void setPlan(int _plan = 1)
-// {
-//   Preferences p;
-//   p.begin("CONFIGS", false);
-//   p.putInt("CURRENT_PLAN", _plan);
-//   p.end();
-// }
-
-// int getPlainIdx()
-// {
-//   Preferences p;
-//   int _plan = 1;
-//   p.begin("CONFIGS", false);
-//   _plan = p.getInt("CURRENT_PLAN", 1);
-//   p.end();
-//   return _plan;
-// }
 
 void wifiSetup(void *parameter)
 {
@@ -1243,6 +1064,8 @@ void getTimeNTP(int n)
   Serial.println("Correção de horario via NTP");
 }
 
+// bool checkBlink(){}
+
 void updateClockVars()
 {
   minute = esp32_rtc.getMinute();
@@ -1282,21 +1105,19 @@ void timer_event(void *parameter)
         }
       }
       Serial.printf(" Agora: %lu\n", now);
-      Plan_model my_plan = getTimes(active);
-      current_plan = my_plan;
-      // if (plan == 0) current_plan.type = semaphore::BLINK;
+      current_plan = plan_list[active];
       Serial.println(esp32_rtc.getTime("%H:%M"));
-      Serial.printf("[LOCAL]: O plano atual: %d , pedestre tipo: %d, numero de fases: %d, hora: %lu:%lu\n", active, my_plan.type, my_plan.n_phases, my_plan.start_hour, my_plan.start_min);
       Serial.printf("[GLOBAL]: O plano atual: %d , pedestre tipo: %d, numero de fases: %d, hora: %lu:%lu\n", active, current_plan.type, current_plan.n_phases, current_plan.start_hour, current_plan.start_min);
       if (plan != active)
       {
         plan = active;
         Serial.printf("Mudança de plano: %d\n", plan);
-        current_plan = my_plan;
-        if (plan == 0)
-        {
-          current_plan.type = semaphore::BLINK;
-        }
+        // current_plan = getTimes(active);
+        current_plan = plan_list[active];
+        // if (plan == 0)
+        // {
+        //   current_plan.type = semaphore::BLINK;
+        // }
 
         //   // savePlan(plan);
       }
@@ -1313,27 +1134,26 @@ void timer_event(void *parameter)
 
 void dumpSystemInfo()
 {
-  for (int j = 0; j <= N_PLAN_MAX; j++)
+  for (int i = 0; i <= N_PLAN_MAX; i++)
   {
-    Plan_model my_plan = getTimes(j);
-    String name = "plan" + String(j);
+    String name = "plano_" + String(i);
     Serial.printf("**************************************************\n");
     Serial.printf("Plano: %s\n", name.c_str());
-    Serial.printf("Tipo de pedestre: \t[%d]\n", my_plan.type);
-    Serial.printf("Dia de inicio:    \t[%d]\n", my_plan.start_day);
-    Serial.printf("Dia de termino:   \t[%d]\n", my_plan.end_day);
-    Serial.printf("hora de inicio:   \t[%d]\n", my_plan.start_hour);
-    Serial.printf("minuto de inicio: \t[%d]\n", my_plan.start_min);
-    Serial.printf("hora de termino:  \t[%d]\n", my_plan.end_hour);
-    Serial.printf("minuto de termino:\t[%d]\n", my_plan.end_min);
-    Serial.printf("hora de inicio:   \t[%d]\n", my_plan.start_hour);
-    Serial.printf("Numero de fases:  \t[%d]\n", my_plan.n_phases);
+    Serial.printf("Tipo de pedestre: \t[%d]\n", plan_list[i].type);
+    Serial.printf("Dia de inicio:    \t[%d]\n", plan_list[i].start_day);
+    Serial.printf("Dia de termino:   \t[%d]\n", plan_list[i].end_day);
+    Serial.printf("hora de inicio:   \t[%d]\n", plan_list[i].start_hour);
+    Serial.printf("minuto de inicio: \t[%d]\n", plan_list[i].start_min);
+    Serial.printf("hora de termino:  \t[%d]\n", plan_list[i].end_hour);
+    Serial.printf("minuto de termino:\t[%d]\n", plan_list[i].end_min);
+    Serial.printf("hora de inicio:   \t[%d]\n", plan_list[i].start_hour);
+    Serial.printf("Numero de fases:  \t[%d]\n", plan_list[i].n_phases);
     Serial.printf("Atrasos entre luzes\n");
     for (int i = 0; i < 8; i++)
     {
-      Serial.printf("[Fase %d] => Verde:\t[%d]\n", i, my_plan.delays[i][colors::GREEN]);
-      Serial.printf("[Fase %d] => Amarelo:\t[%d]\n", i, my_plan.delays[i][colors::YELLOW]);
-      Serial.printf("[Fase %d] => vermelho:\t[%d]\n", i, my_plan.delays[i][colors::RED]);
+      Serial.printf("[Fase %d] => Verde:\t[%d]\n", i, plan_list[i].delays[i][colors::GREEN]);
+      Serial.printf("[Fase %d] => Amarelo:\t[%d]\n", i, plan_list[i].delays[i][colors::YELLOW]);
+      Serial.printf("[Fase %d] => vermelho:\t[%d]\n", i, plan_list[i].delays[i][colors::RED]);
     }
   }
   // getTimes(getPlainIdx());
@@ -1342,20 +1162,11 @@ void dumpSystemInfo()
 void getStartTimePlan(unsigned long *events)
 {
   Serial.printf("Lista de horarios\n");
+
   for (int i = 0; i <= N_PLAN_MAX; i++)
   {
-    String name = "plan" + String(i);
-    // Serial.printf("Plano: %s\n", name.c_str());
-
-    Preferences p;
-    p.begin(name.c_str(), false);
-
-    // Tipo de pedestre
-    String key = "BEGIN_H";
-    int start_hour = p.getInt(key.c_str(), 0);
-    key = "BEGIN_M";
-    int start_min = p.getInt(key.c_str(), 0);
-    p.end();
+    int start_hour = plan_list[i].start_hour;
+    int start_min = plan_list[i].start_min;
     // Guarda um horario no array de horarios
     events[i] = (unsigned long)start_hour * 60 * 60 + start_min * 60;
     Serial.printf("event[%d] =\t%ld\n", i, events[i]);
@@ -1365,31 +1176,26 @@ void getStartTimePlan(unsigned long *events)
 
 void saveBlinkPlan(int n)
 {
-  Preferences p;
-  String name = "plan0";
-
+  // OBS: implementar a quantidade de fases tambem
   Serial.printf("Salvando plano amarelo intermitente\n");
-
-  // setPlan(plan);
-
-  p.begin(name.c_str(), false);
-  String key = "WALKER_TYPE";
-  p.putInt(key.c_str(), 2);
-  // String key = "BEGIN_DAY";
-  // p.putInt(key.c_str(), current_plan.start_day);
-  // key = "END_DAY";
-  // p.putInt(key.c_str(), current_plan.end_day);
-  key = "BEGIN_H";
-  p.putInt(key.c_str(), current_plan.start_hour);
-  // key = "END_H";
-  // p.putInt(key.c_str(), current_plan.end_hour);
-  key = "BEGIN_M";
-  p.putInt(key.c_str(), current_plan.start_min);
-  // key = "END_M";
-  // p.putInt(key.c_str(), current_plan.end_min);
-
-  p.end();
+  plan_list[0].type = 2; // Tipo 2 (Amarelo intermitente)
+  plan_list[0].n_phases = current_plan.n_phases;
+  plan_list[0].start_hour = current_plan.start_hour;
+  plan_list[0].start_min = current_plan.start_min;
+  plan_list[0].save();
   getStartTimePlan(horarios);
+}
+
+void init_plans()
+{
+  SPIFFS.begin(false);
+  current_plan.listDir();
+  for (int i = 0; i <= N_PLAN_MAX; i++)
+  {
+    Plan_model p;
+    p.init(i);
+    plan_list.push_back(p);
+  }
 }
 
 void setup()
@@ -1406,6 +1212,8 @@ void setup()
   esp_task_wdt_add(NULL);
   Serial.println(CONFIG_ARDUINO_LOOP_STACK_SIZE);
   Serial.println();
+
+  init_plans();
 
   // I2C1.begin(SDA, SCL, uint32_t(100000));
   Wire.begin(SDA, SCL, uint32_t(100000));
@@ -1441,8 +1249,15 @@ void loop()
 {
   if (digitalRead(0) == 0)
   {
-    nvs_flash_erase(); // erase the NVS partition and...
-    nvs_flash_init();
+    if (SPIFFS.format())
+    {
+      Serial.println("\n\nSuccess formatting");
+    }
+    else
+    {
+      Serial.println("\n\nError formatting");
+    }
+    ESP.restart();
   }
   hours_str = esp32_rtc.getTime("%H:%M");
   screen_manager.showMenu();
