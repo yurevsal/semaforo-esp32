@@ -1105,7 +1105,6 @@ void timerEvents(void *parameter)
       unsigned long active = 0;
       unsigned long active_time = 0;
       unsigned long now = esp32_rtc.getSecond() + 60 * esp32_rtc.getMinute() + 60 * 60 * esp32_rtc.getHour(true);
-      Serial.println("[1] ESTOU VIVO");
       // Serial.printf("[%ld]-[%ld]-[%ld]\n", horarios[0], plan_list[0].end_hour * 3600 + plan_list[0].end_min * 60, now);
 
       if (isWithinRange(horarios[0], plan_list[0].end_hour * 3600 + plan_list[0].end_min * 60, now))
