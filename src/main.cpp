@@ -174,7 +174,7 @@ void Manager::showMenu()
 Manager screen_manager = Manager();
 Menu main_menu("Plano {0}", 0, &plan),
     menu_plans("Planos"),
-    menu_ped("Tipo: {0}", 0, &current_plan.type, 0, 1 , {"CICLICO", "DEMANDA","AMARELO"}),
+    menu_ped("Tipo: {0}", 0, &current_plan.type, 0, 1, {"CICLICO", "DEMANDA", "AMARELO"}),
     menu_config_fases("Config. Fases"),
     blink_y("Amarelo intermitente"),
     menu_RTC("Ajustar RTC"),
@@ -182,9 +182,10 @@ Menu main_menu("Plano {0}", 0, &plan),
     menu_wifi_off("Desconectar WiFi");
 
 Menu start_time("Hora de inicio"),
-    end_time("Hora de termino"),
-    select_day("Dia de inicio/fim");
-
+    end_time("Hora de termino");
+    // select_day("Dia de inicio/fim");
+Menu y_start_time("Hora de inicio"),
+    y_end_time("Hora de termino");
 Menu get_start_hour("Hora: {0}", 0, &current_plan.start_hour, 0, 23),
     get_start_min("Minuto: {0}", 0, &current_plan.start_min, 0, 59),
     get_end_hour("Hora: {0}", 0, &current_plan.end_hour, 0, 23),
@@ -304,7 +305,8 @@ void initMenus()
   start_time.pushMenu(&get_start_hour);
   start_time.pushMenu(&get_start_min);
 
-  end_time.pushMenu(&_back);
+  // end_time.pushMenu(&_back);
+  end_time.pushMenu(&_save_back, &savePlan);
   end_time.pushMenu(&get_end_hour);
   end_time.pushMenu(&get_end_min);
 
@@ -312,7 +314,7 @@ void initMenus()
   // select_day.pushMenu(&get_start_day);
   // select_day.pushMenu(&get_end_day);
 
-  // menu_plan_time.pushMenu(&_back);
+  menu_plan_time.pushMenu(&_back);
   menu_plan_time.pushMenu(&_save_back, &savePlan);
   menu_plan_time.pushMenu(&start_time);
   // menu_plan_time.pushMenu(&end_time);
@@ -343,11 +345,22 @@ void initMenus()
   menu_wifi_off.pushMenu(&_back);
   menu_wifi_off.pushMenu(&clear_wifi_back, &cleanWifi);
 
+  
+    // start_time.pushMenu(&_back);
+  y_start_time.pushMenu(&_save_yellow, &saveBlinkPlan);
+  y_start_time.pushMenu(&get_start_hour);
+  y_start_time.pushMenu(&get_start_min);
+
+  // end_time.pushMenu(&_back);
+  y_end_time.pushMenu(&_save_yellow, &saveBlinkPlan);
+  y_end_time.pushMenu(&get_end_hour);
+  y_end_time.pushMenu(&get_end_min);
   // blink_y.pushMenu(&_back);
+  
   blink_y.pushMenu(&_save_yellow, &saveBlinkPlan);
   blink_y.pushMenu(&menu_phases_length);
-  blink_y.pushMenu(&start_time);
-  blink_y.pushMenu(&end_time);
+  blink_y.pushMenu(&y_start_time);
+  blink_y.pushMenu(&y_end_time);
 
   main_menu.pushMenu(&menu_plans);
   main_menu.pushMenu(&blink_y);
@@ -672,8 +685,8 @@ void ledsLoop(void *parameter)
     esp_task_wdt_reset();
     setFase(i, colors::RED, 1);
   }
-  vTaskDelay(3000 / portTICK_PERIOD_MS);                   
-  for(;;)
+  vTaskDelay(3000 / portTICK_PERIOD_MS);
+  for (;;)
   {
     esp_task_wdt_reset();
     // Modo via comum
@@ -688,7 +701,6 @@ void ledsLoop(void *parameter)
 
     while (current_plan.type == semaphore::NORMAL)
     {
-      Serial.printf("[1]: Ciclico\n" );
       esp_task_wdt_reset();
       int canal_counter = 0;
       bool canal_turn_off = false;
@@ -756,7 +768,6 @@ void ledsLoop(void *parameter)
         setFase(i, colors::YELLOW, 0);
         setFase(i, colors::RED, 0);
       }
-      Serial.printf("[2]: Ciclico\n" );
     }
     for (int i = 1; i <= current_plan.n_phases; i++)
     {
@@ -767,7 +778,6 @@ void ledsLoop(void *parameter)
     }
     while (current_plan.type == semaphore::HIGHWAY)
     {
-      Serial.printf("[1]: Demanda\n" );
       esp_task_wdt_reset();
       current_channel = 0;
       for (int i = 1; i < 7; i++)
@@ -833,7 +843,6 @@ void ledsLoop(void *parameter)
         }
         pede_clicked = false;
       }
-      Serial.printf("[2]: Demanda\n" );
     }
     for (int i = 1; i <= current_plan.n_phases; i++)
     {
@@ -853,14 +862,12 @@ void ledsLoop(void *parameter)
       }
       current_color = "AM";
       current_channel = 0;
-      Serial.println("Amarelo Ligado");
       for (int i = 1; i <= current_plan.n_phases; i++)
       {
         esp_task_wdt_reset();
         setFase(i, colors::YELLOW, 1);
       }
       vTaskDelay(1000 / portTICK_PERIOD_MS); //
-      Serial.println("Amarelo Desligado");
       for (int i = 1; i <= current_plan.n_phases; i++)
       {
         esp_task_wdt_reset();
@@ -1064,8 +1071,6 @@ void getTimeNTP(int n)
   Serial.println("Correção de horario via NTP");
 }
 
-// bool checkBlink(){}
-
 void updateClockVars()
 {
   minute = esp32_rtc.getMinute();
@@ -1074,8 +1079,21 @@ void updateClockVars()
   month = esp32_rtc.getMonth();
   year = esp32_rtc.getYear();
 }
+
+bool isWithinRange(unsigned long startTime, unsigned long endTime, unsigned long timeToCheck)
+{
+  if (startTime <= endTime)
+  { // caso normal, sem passagem de meia-noite
+    return (timeToCheck >= startTime && timeToCheck <= endTime);
+  }
+  else
+  { // caso com passagem de meia-noite
+    return (timeToCheck >= startTime || timeToCheck <= endTime);
+  }
+}
+
 // Rotina que verifica horarios dos planos
-void timer_event(void *parameter)
+void timerEvents(void *parameter)
 {
   esp_task_wdt_add(NULL);
   for (;;)
@@ -1087,9 +1105,19 @@ void timer_event(void *parameter)
       unsigned long active = 0;
       unsigned long active_time = 0;
       unsigned long now = esp32_rtc.getSecond() + 60 * esp32_rtc.getMinute() + 60 * 60 * esp32_rtc.getHour(true);
-      for (uint8_t i = 0; i <= N_PLAN_MAX; i++)
+      Serial.println("[1] ESTOU VIVO");
+      // Serial.printf("[%ld]-[%ld]-[%ld]\n", horarios[0], plan_list[0].end_hour * 3600 + plan_list[0].end_min * 60, now);
+
+      if (isWithinRange(horarios[0], plan_list[0].end_hour * 3600 + plan_list[0].end_min * 60, now))
       {
-        Serial.printf("[%lu] ", horarios[i]);
+        current_plan = plan_list[0];
+        Serial.printf("Amarelo intermitente. Horário: %dh:%d até as %dh:%d\n",plan_list[0].start_hour,plan_list[0].start_min, plan_list[0].end_hour,plan_list[0].end_min);
+      }
+      else
+      {
+      for (uint8_t i = N_PLAN_MAX; i > 0; i--)
+      {
+        Serial.printf("[%lu] ", horarios[N_PLAN_MAX - i]);
         // Limite inferior
         long diff = (long)horarios[i] - now;
         // se diff for negativo significa que o horario é anterior ao horario atual
@@ -1101,6 +1129,19 @@ void timer_event(void *parameter)
             min_diff = diff;
             active = i;
             active_time = horarios[i];
+          }
+        }
+      }
+      // Condição para quando o horario atual é anterior a todos os eventos
+      if(active == 0)
+      {
+        long temp=0;
+        for(uint8_t i = N_PLAN_MAX; i > 0; i--)
+        {
+          if (temp < horarios[i])
+          {
+            active = i;
+            temp = horarios[i];
           }
         }
       }
@@ -1121,6 +1162,7 @@ void timer_event(void *parameter)
 
         //   // savePlan(plan);
       }
+    }
     }
     else
     {
@@ -1182,6 +1224,8 @@ void saveBlinkPlan(int n)
   plan_list[0].n_phases = current_plan.n_phases;
   plan_list[0].start_hour = current_plan.start_hour;
   plan_list[0].start_min = current_plan.start_min;
+  plan_list[0].end_hour = current_plan.end_hour;
+  plan_list[0].end_min = current_plan.end_min;
   plan_list[0].save();
   getStartTimePlan(horarios);
 }
@@ -1226,7 +1270,7 @@ void setup()
   getStartTimePlan(horarios);
 
   xTaskCreate(switchPolling, "switch_polling", 14048, NULL, 1, NULL);
-  xTaskCreate(timer_event, "timer_event", 4048, NULL, 1, NULL);
+  xTaskCreate(timerEvents, "timerEvents", 4048, NULL, 1, NULL);
   xTaskCreate(ledsLoop, "leds_loop", 4048, NULL, 1, NULL);
 
   display.init();
