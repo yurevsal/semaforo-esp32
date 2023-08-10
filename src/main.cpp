@@ -205,30 +205,30 @@ Menu menu_plan_index("Plano: {0}", 0, &plan, 1, N_PLAN_MAX),
     fase7("Fase 7"),
     fase8("Fase 8");
 
-Menu t_green1("Tempo VD: {0}", 0, &current_plan.delays[0][0], 0, 999),
-    t_yellow1("Tempo AM: {0}", 0, &current_plan.delays[0][1], 0, 999),
-    t_red1("Tempo VM: {0}", 0, &current_plan.delays[0][2], 0, 999),
-    t_green2("Tempo VD: {0}", 0, &current_plan.delays[1][0], 0, 999),
-    t_yellow2("Tempo AM: {0}", 0, &current_plan.delays[1][1], 0, 999),
-    t_red2("Tempo VM: {0}", 0, &current_plan.delays[1][2], 0, 999),
-    t_green3("Tempo VD: {0}", 0, &current_plan.delays[2][0], 0, 999),
-    t_yellow3("Tempo AM: {0}", 0, &current_plan.delays[2][1], 0, 999),
-    t_red3("Tempo VM: {0}", 0, &current_plan.delays[2][2], 0, 999),
-    t_green4("Tempo VD: {0}", 0, &current_plan.delays[3][0], 0, 999),
-    t_yellow4("Tempo AM: {0}", 0, &current_plan.delays[3][1], 0, 999),
-    t_red4("Tempo VM: {0}", 0, &current_plan.delays[3][2], 0, 999),
-    t_green5("Tempo VD: {0}", 0, &current_plan.delays[4][0], 0, 999),
-    t_yellow5("Tempo AM: {0}", 0, &current_plan.delays[4][1], 0, 999),
-    t_red5("Tempo VM: {0}", 0, &current_plan.delays[4][2], 0, 999),
-    t_green6("Tempo VD: {0}", 0, &current_plan.delays[5][0], 0, 999),
-    t_yellow6("Tempo AM: {0}", 0, &current_plan.delays[5][1], 0, 999),
-    t_red6("Tempo VM: {0}", 0, &current_plan.delays[5][2], 0, 999),
-    t_green7("Tempo VD: {0}", 0, &current_plan.delays[6][0], 0, 999),
-    t_yellow7("Tempo AM: {0}", 0, &current_plan.delays[6][1], 0, 999),
-    t_red7("Tempo VM: {0}", 0, &current_plan.delays[6][2], 0, 999),
-    t_green8("Tempo VD: {0}", 0, &current_plan.delays[7][0], 0, 999),
-    t_yellow8("Tempo AM: {0}", 0, &current_plan.delays[7][1], 0, 999),
-    t_red8("Tempo VM: {0}", 0, &current_plan.delays[7][2], 0, 999);
+Menu t_green1("Tempo VD: {0}", 0, &current_plan.delays[0][colors::GREEN], 0, 999),
+    t_yellow1("Tempo AM: {0}", 0, &current_plan.delays[0][colors::YELLOW], 0, 999),
+    t_red1("Tempo VM: {0}", 0, &current_plan.delays[0][colors::RED], 0, 999),
+    t_green2("Tempo VD: {0}", 0, &current_plan.delays[1][colors::GREEN], 0, 999),
+    t_yellow2("Tempo AM: {0}", 0, &current_plan.delays[1][colors::YELLOW], 0, 999),
+    t_red2("Tempo VM: {0}", 0, &current_plan.delays[1][colors::RED], 0, 999),
+    t_green3("Tempo VD: {0}", 0, &current_plan.delays[2][colors::GREEN], 0, 999),
+    t_yellow3("Tempo AM: {0}", 0, &current_plan.delays[2][colors::YELLOW], 0, 999),
+    t_red3("Tempo VM: {0}", 0, &current_plan.delays[2][colors::RED], 0, 999),
+    t_green4("Tempo VD: {0}", 0, &current_plan.delays[3][colors::GREEN], 0, 999),
+    t_yellow4("Tempo AM: {0}", 0, &current_plan.delays[3][colors::YELLOW], 0, 999),
+    t_red4("Tempo VM: {0}", 0, &current_plan.delays[3][colors::RED], 0, 999),
+    t_green5("Tempo VD: {0}", 0, &current_plan.delays[4][colors::GREEN], 0, 999),
+    t_yellow5("Tempo AM: {0}", 0, &current_plan.delays[4][colors::YELLOW], 0, 999),
+    t_red5("Tempo VM: {0}", 0, &current_plan.delays[4][colors::RED], 0, 999),
+    t_green6("Tempo VD: {0}", 0, &current_plan.delays[5][colors::GREEN], 0, 999),
+    t_yellow6("Tempo AM: {0}", 0, &current_plan.delays[5][colors::YELLOW], 0, 999),
+    t_red6("Tempo VM: {0}", 0, &current_plan.delays[5][colors::RED], 0, 999),
+    t_green7("Tempo VD: {0}", 0, &current_plan.delays[6][colors::GREEN], 0, 999),
+    t_yellow7("Tempo AM: {0}", 0, &current_plan.delays[6][colors::YELLOW], 0, 999),
+    t_red7("Tempo VM: {0}", 0, &current_plan.delays[6][colors::RED], 0, 999),
+    t_green8("Tempo VD: {0}", 0, &current_plan.delays[7][colors::GREEN], 0, 999),
+    t_yellow8("Tempo AM: {0}", 0, &current_plan.delays[7][colors::YELLOW], 0, 999),
+    t_red8("Tempo VM: {0}", 0, &current_plan.delays[7][colors::RED], 0, 999);
 
 Menu date_day("Dia: {0}", 0, &day, 1, 31),
     date_month("Mes: {0}", 0, &month, 1, 12),
@@ -719,12 +719,12 @@ void ledsLoop(void *parameter)
           setFase(FASE_PEDE, colors::GREEN, 1);
           setFase(FASE_PEDE, colors::RED, 0);
           esp_task_wdt_reset();
-          vTaskDelay(5000 / portTICK_PERIOD_MS);
+          vTaskDelay(current_plan.delays[7][colors::GREEN] * 1000 / portTICK_PERIOD_MS); // x1000 converte para segundos
           pede_current_color = "VM";
           setFase(FASE_PEDE, colors::GREEN, 0);
           setFase(FASE_PEDE, colors::RED, 1);
           esp_task_wdt_reset();
-          vTaskDelay(100 / portTICK_PERIOD_MS);
+          vTaskDelay(current_plan.delays[7][colors::RED] * 1000 / portTICK_PERIOD_MS); // x1000 converte para segundos
           pede_clicked = false;
         }
         else
@@ -1146,8 +1146,8 @@ void timerEvents(void *parameter)
       }
       Serial.printf(" Agora: %lu\n", now);
       current_plan = plan_list[active];
-      Serial.println(esp32_rtc.getTime("%H:%M"));
-      Serial.printf("[GLOBAL]: O plano atual: %d , pedestre tipo: %d, numero de fases: %d, hora: %lu:%lu\n", active, current_plan.type, current_plan.n_phases, current_plan.start_hour, current_plan.start_min);
+      // Serial.println(esp32_rtc.getTime("%H:%M"));
+      // Serial.printf("[GLOBAL]: O plano atual: %d , pedestre tipo: %d, numero de fases: %d, hora: %lu:%lu\n", active, current_plan.type, current_plan.n_phases, current_plan.start_hour, current_plan.start_min);
       if (plan != active)
       {
         plan = active;
@@ -1190,11 +1190,11 @@ void dumpSystemInfo()
     Serial.printf("hora de inicio:   \t[%d]\n", plan_list[i].start_hour);
     Serial.printf("Numero de fases:  \t[%d]\n", plan_list[i].n_phases);
     Serial.printf("Atrasos entre luzes\n");
-    for (int i = 0; i < 8; i++)
+    for (int j = 0; j < 8; j++)
     {
-      Serial.printf("[Fase %d] => Verde:\t[%d]\n", i, plan_list[i].delays[i][colors::GREEN]);
-      Serial.printf("[Fase %d] => Amarelo:\t[%d]\n", i, plan_list[i].delays[i][colors::YELLOW]);
-      Serial.printf("[Fase %d] => vermelho:\t[%d]\n", i, plan_list[i].delays[i][colors::RED]);
+      Serial.printf("[Fase %d] => Verde:\t[%d]\n", i, plan_list[i].delays[j][colors::GREEN]);
+      Serial.printf("[Fase %d] => Amarelo:\t[%d]\n", i, plan_list[i].delays[j][colors::YELLOW]);
+      Serial.printf("[Fase %d] => vermelho:\t[%d]\n", i, plan_list[i].delays[j][colors::RED]);
     }
   }
   // getTimes(getPlainIdx());
@@ -1236,9 +1236,16 @@ void init_plans()
   for (int i = 0; i <= N_PLAN_MAX; i++)
   {
     Plan_model p;
-    p.init(i);
+    if(!p.init(i))
+    {
+        Serial.printf("[DEBUG] Arquivo não encontrado\n");
+    }
     plan_list.push_back(p);
+    Serial.printf("Vermelhos: %d, %d, %d, %d, %d, %d, %d, %d\n",plan_list[i].delays[0][0],plan_list[i].delays[1][0],plan_list[i].delays[2][0],plan_list[i].delays[3][0],plan_list[i].delays[4][0],plan_list[i].delays[5][0],plan_list[i].delays[6][0],plan_list[i].delays[7][0]);
+    Serial.printf("Amarelos: %d, %d, %d, %d, %d, %d, %d, %d\n",plan_list[i].delays[0][1],plan_list[i].delays[1][1],plan_list[i].delays[2][1],plan_list[i].delays[3][1],plan_list[i].delays[4][1],plan_list[i].delays[5][1],plan_list[i].delays[6][1],plan_list[i].delays[7][1]);
+    Serial.printf("Verdes: %d, %d, %d, %d, %d, %d, %d, %d\n",plan_list[i].delays[0][2],plan_list[i].delays[1][2],plan_list[i].delays[2][2],plan_list[i].delays[3][2],plan_list[i].delays[4][2],plan_list[i].delays[5][2],plan_list[i].delays[6][2],plan_list[i].delays[7][2]);
   }
+  // dumpSystemInfo();
 }
 
 void setup()
@@ -1290,18 +1297,18 @@ void setup()
 
 void loop()
 {
-  if (digitalRead(0) == 0)
-  {
-    if (SPIFFS.format())
-    {
-      Serial.println("\n\nSuccess formatting");
-    }
-    else
-    {
-      Serial.println("\n\nError formatting");
-    }
-    ESP.restart();
-  }
+  // if (digitalRead(0) == 0)
+  // {
+  //   if (SPIFFS.format())
+  //   {
+  //     Serial.println("\n\nSuccess formatting");
+  //   }
+  //   else
+  //   {
+  //     Serial.println("\n\nError formatting");
+  //   }
+  //   ESP.restart();
+  // }
   hours_str = esp32_rtc.getTime("%H:%M");
   screen_manager.showMenu();
   // Serial.println(current_plan.type);
@@ -1312,6 +1319,7 @@ void loop()
   // Teste de requisição em 10s
   if ((millis() - refreshServerTime) / 1000 >= 10)
   {
+    dumpSystemInfo();
     // Serial.println("Request server");
     // requestServer(serverName);
     // Serial.printf("Refresh server\n");

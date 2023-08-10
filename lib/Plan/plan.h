@@ -35,7 +35,7 @@ public:
     uint32_t start_counter;
     uint32_t stop_counter;
   
-    void init(int _id);
+    bool init(int _id);
     bool listDir();
     void save();
     bool load();

@@ -68,23 +68,15 @@ bool Plan_model::writeFile(String path, String message)
     return true;
 }
 
-void Plan_model::init(int _id)
+bool Plan_model::init(int _id)
 {
     id = _id;
-    if (load())
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 8; j++)
-            {
-                delays[j][i] = 1;
-            }
-        }
-    }
-    else
+    if (!load())
     {
         Serial.printf("Falha ao ler o arquivo: plano_%d.json\n", id);
+        return false;
     }
+    return true;
 }
 
 void Plan_model::save()
@@ -155,8 +147,8 @@ bool Plan_model::load()
         delays[6][i] = doc["fase_7"][i];
         delays[7][i] = doc["fase_8"][i];
     }
-    // Serial.printf("Verdes: %d, %d, %d, %d, %d, %d, %d, %d\n",delays[0][0],delays[1][0],delays[2][0],delays[3][0],delays[4][0],delays[5][0],delays[6][0],delays[7][0]);
+    // Serial.printf("Vermelhos: %d, %d, %d, %d, %d, %d, %d, %d\n",delays[0][0],delays[1][0],delays[2][0],delays[3][0],delays[4][0],delays[5][0],delays[6][0],delays[7][0]);
     // Serial.printf("Amarelos: %d, %d, %d, %d, %d, %d, %d, %d\n",delays[0][1],delays[1][1],delays[2][1],delays[3][1],delays[4][1],delays[5][1],delays[6][1],delays[7][1]);
-    // Serial.printf("Vermelhos: %d, %d, %d, %d, %d, %d, %d, %d\n",delays[0][2],delays[1][2],delays[2][2],delays[3][2],delays[4][2],delays[5][2],delays[6][2],delays[7][2]);
+    // Serial.printf("Verdes: %d, %d, %d, %d, %d, %d, %d, %d\n",delays[0][2],delays[1][2],delays[2][2],delays[3][2],delays[4][2],delays[5][2],delays[6][2],delays[7][2]);
     return true;
 }
