@@ -1,0 +1,35 @@
+Componentes do sistema
+ - loop dos leds que depende do plano corrente
+ - Plano corrente
+ - Pilha de menus
+ - Rotina RTC que define o plano pelo horario
+ - Rotina de conexão WiFi
+ - Rotina de conexão mqtt
+
+Plano normal
+ - Horario de inicio-fim
+ - Array de tempo de cada semaforo
+ - Fases utilizadas
+
+Plano Demanda
+ - Horario de inicio-fim
+ - Fases utilizadas
+
+Plano Amarelo intermitente
+ - Horario de inicio-fim
+ - Fases utilizadas
+
+Classe que guarda e checa eventos RTC
+ - Classe vai ter um vetor que guarda um objeto.
+ - Cada objeto tem um numero em segundos para inicio/fim, um inteiro referente ao plano
+
+Manager
+ - Plano corrente
+ - Plano auxiliar (plano que é editado no menu)
+ - Loop de eventos
+ - Loop de botões
+ - Loop de leds
+ - Loop do display
+ - Loop WiFi
+ - Loop MQTT
+

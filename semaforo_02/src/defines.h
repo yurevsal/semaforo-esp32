@@ -6,8 +6,8 @@
 #include <ArduinoJson.h>
 #include <WiFiManager.h>
 #include <SPI.h>
-#include <Wire.h>        // Only needed for Arduino 1.6.5 and earlier
-#include "SSD1306Wire.h" // legacy: #include "SSD1306.h"
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h> 
 #include "PCF8574.h"
 #include "RTClib.h"
 #include <vector>
@@ -16,6 +16,7 @@
 #include "menu.h"
 #include "manager.h"
 #include <plan.h>
+#include <esp32_utils.h>
 
 #define NOME_EMPRESA "Nome Impresa"
 #define N_PLAN_MAX 6
