@@ -2,16 +2,25 @@
 #include "functions.h"
 
 extern Menu main_menu;
+extern WiFiManager wm;
+
+// class Context
+// {
+//   public:
+//   Menu parent;
+// };
 
 void setup(){
   Serial.begin(115200);
   initOutputs();
   initDisplay();
-  main_menu.setMenuInterface(mainScreen);
-  main_menu.show();
+  initWiFiManager();
+  mqttSetup();
+  // main_menu.setMenuInterface(mainScreen);
+  // main_menu.show();
+  xTaskCreate(reconnect, "reconnect_client", 4048, NULL, 10, NULL);
 
 }
 void loop(){
-  Serial.println("loop");
-  delay(1000);
+  process();
 }
