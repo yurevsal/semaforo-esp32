@@ -14,6 +14,7 @@
 #include <ESP32Time.h>
 #include <LiquidCrystal_I2C.h>
 #include <menu.h>
+#include <manager.h>
 
 // I2C
 #define LCD_ADDRESS         0x22

@@ -3,12 +3,8 @@
 
 extern Menu main_menu;
 extern WiFiManager wm;
+Manager manager;
 
-// class Context
-// {
-//   public:
-//   Menu parent;
-// };
 
 void setup(){
   Serial.begin(115200);
@@ -16,11 +12,13 @@ void setup(){
   initDisplay();
   initWiFiManager();
   mqttSetup();
-  // main_menu.setMenuInterface(mainScreen);
-  // main_menu.show();
+  initMenus();
+  main_menu.setMenuInterface(mainScreen);
+  manager.begin(&main_menu);
   xTaskCreate(reconnect, "reconnect_client", 4048, NULL, 10, NULL);
-
 }
 void loop(){
+  manager.showMenu();
   process();
+  delay(100);
 }

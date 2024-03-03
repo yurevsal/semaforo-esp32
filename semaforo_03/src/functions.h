@@ -10,7 +10,14 @@ void mqttSetup();
 void process();
 void reconnect(void *p);
 
+void initMenus();
 void mainScreen(void *p);
+void item1Screen(void *p);
+void item2Screen(void *p);
+void item3Screen(void *p);
+void item4Screen(void *p);
+void item5Screen(void *p);
+
 // void menuPlans(void *p);
 // void menuPed(void *p);
 // void menuConfigPhases(void *p);
